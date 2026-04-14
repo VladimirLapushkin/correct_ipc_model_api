@@ -27,7 +27,7 @@ k8s_balancer_to_vars_airflow:
 	echo "k8s_balancer_ip = \"$$BALANCER_IP\"" >> "$$PARENT_ENV_FILE"
 
 
-deploy_secrets: kubeconf k8s_deploy git_secrets push_secrets k8s_balancer_to_vars_airflow deploy_api
+deploy_all: kubeconf k8s_deploy git_secrets push_secrets k8s_balancer_to_vars_airflow deploy_api
 
 apply:
 	$(MAKE) -C infra apply

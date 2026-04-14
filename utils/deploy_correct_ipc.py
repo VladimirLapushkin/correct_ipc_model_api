@@ -9,7 +9,7 @@ secrets = dotenv_values(".env")
 
 GITHUB_TOKEN = secrets.get("GITHUB_TOKEN")
 GITHUB_REPO = secrets.get("GITHUB_REPO")  # формат: owner/repo
-WORKFLOW_FILENAME = secrets.get("GITHUB_WORKFLOW_DEPLOY_FILE", "deploy-correct-ipc.yml")
+WORKFLOW_FILENAME = secrets.get("GITHUB_WORKFLOW_DEPLOY_FILE", "ci-cd.yml")
 WORKFLOW_REF = secrets.get("GITHUB_WORKFLOW_REF", "main")
 WORKFLOW_ENV = secrets.get("GITHUB_WORKFLOW_ENV", "dev")
 

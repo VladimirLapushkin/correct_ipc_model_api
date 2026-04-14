@@ -11,7 +11,7 @@ from loguru import logger
 
 # Загрузить переменные из .env
 secrets = dotenv_values(".env")
-secrets_blacklist = ["GITHUB_TOKEN", "GITHUB_REPO", "PRIVATE_KEY_PATH"]
+secrets_blacklist = ["GITHUB_TOKEN", "GITHUB_REPO", "PRIVATE_KEY_PATH", "GITHUB_WORKFLOW_DEPLOY_FILE", "GITHUB_WORKFLOW_REF", "GITHUB_WORKFLOW_ENV",]
 
 # GitHub API токен и репозиторий
 GITHUB_TOKEN = secrets.get("GITHUB_TOKEN")  # Убедитесь, что токен есть в .env
