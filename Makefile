@@ -16,7 +16,7 @@ kubeconf:
 	yc managed-kubernetes cluster get-credentials mlops-k8s --external
 	
 k8s_deploy:	
-	kubectl apply -f k8s/deployment.yaml
+	# kubectl apply -f k8s/deployment.yaml
 	kubectl apply -f k8s/prometheusrule.yaml
 	kubectl apply -f k8s/servicemonitor.yaml
 
@@ -27,7 +27,7 @@ k8s_balancer_to_vars_airflow:
 	echo "k8s_balancer_ip = \"$$BALANCER_IP\"" >> "$$PARENT_ENV_FILE"
 
 
-deploy_all: kubeconf k8s_deploy git_secrets push_secrets k8s_balancer_to_vars_airflow deploy_api
+deploy_all: kubeconf k8s_deploy git_secrets push_secrets k8s_balancer_to_vars_airflow
 
 apply:
 	$(MAKE) -C infra apply

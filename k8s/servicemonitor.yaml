@@ -11,7 +11,7 @@ spec:
       - default
   selector:
     matchLabels:
-      app: correct-ipc-api
+      app: correct-ipc
   endpoints:
     - port: http
       path: /metrics

@@ -97,5 +97,8 @@ jobs:
       - name: Render deployment manifest
         run: |
           sed "s|IMAGE_PLACEHOLDER|$IMAGE|g" k8s/deployment.yaml > k8s/deployment.rendered.yaml
-
       
+      - name: Deploy rendered manifest
+        run: |
+          kubectl apply -f k8s/deployment.rendered.yaml
+          kubectl rollout status deploy/correct-ipc

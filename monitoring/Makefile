@@ -6,8 +6,8 @@ destroy:
 
 .PHONY: monitoring
 monitoring:
-	kubectl apply -f config/servicemonitor-correct-ipc-api.yaml
 	kubectl apply -f config/prometheusrule-correct-ipc-api.yaml
+	kubectl apply -f config/servicemonitor-correct-ipc-api.yaml
 	kubectl apply -f config/alertmanager-config.yaml
 	kubectl apply -f config/ipc-model-api-scaling-dashboard.yaml
 	
