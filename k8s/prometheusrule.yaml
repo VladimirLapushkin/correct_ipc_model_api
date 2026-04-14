@@ -1,0 +1,37 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: correct-ipc-api-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: correct-ipc-api.rules
+      rules:
+        - alert: correct-ipcApiMaxReplicasHighCpu
+          expr: |
+            (
+              kube_deployment_status_replicas_available{namespace="default", deployment="correct-ipc-api"} >= 6
+            )
+            and
+            (
+              max by (namespace) (
+                (
+                  sum by (namespace, pod) (
+                    rate(container_cpu_usage_seconds_total{namespace="default", pod=~"correct-ipc-api-.*", container="correct-ipc-api"}[5m])
+                  )
+                  /
+                  sum by (namespace, pod) (
+                    kube_pod_container_resource_requests{namespace="default", pod=~"correct-ipc-api-.*", container="correct-ipc-api", resource="cpu", unit="core"}
+                  )
+                ) * 100
+              ) > 80
+            )
+          for: 5m
+          labels:
+            severity: warning
+            service: correct-ipc-api
+          annotations:
+            summary: "correct-ipc-api scaled to max replicas and CPU is high"
+            description: "Deployment correct-ipc-api has 4 or more available replicas and at least one pod CPU usage is above 80% of requested CPU for 5 minutes."

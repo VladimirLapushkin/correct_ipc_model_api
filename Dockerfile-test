@@ -1,0 +1,12 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1
+
+COPY requirements.test.txt .
+RUN pip install --no-cache-dir -r requirements.test.txt
+
+COPY app ./app
+COPY tests ./tests
+
+CMD ["pytest", "-q"]

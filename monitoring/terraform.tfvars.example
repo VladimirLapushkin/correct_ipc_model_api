@@ -1,0 +1,2 @@
+kube_context            = "yc-mlops-k8s"
+grafana_admin_password  = "change-me-please"
