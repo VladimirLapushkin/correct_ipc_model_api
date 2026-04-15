@@ -18,6 +18,7 @@ NUMERIC_COLS = ["ai_score", "rank", "main_group", "subgroup"]
 CATEGORICAL_COLS = ["section", "class2", "subclass"]
 #IPC_RE = re.compile(r'^([A-H])(\\d{2})([A-Z])\\s*([0-9]{1,4})/([0-9]{2,6})$')
 #IPC_RE = re.compile(r'^([A-H])(\d{2})([A-Z])\s*([0-9]{1,4})/([0-9]{2,6})$')
+
 IPC_RE = re.compile(r'^([A-H])(\d{2})([A-Z])\s*([0-9]{1,4})(?:/([0-9]{2,6}))?$')
 CANDIDATE_RE = re.compile(r'([^;]+?)\\s*\\(([0-9]+(?:\\.[0-9]+)?)%\\)')
 
@@ -86,13 +87,18 @@ def parse_ipc_code(ipc_code: str) -> dict:
         raise ValueError(f"Invalid IPC code format: {ipc_code}")
 
     section, class2, subclass, main_group, subgroup = m.groups()
+
+    main_group_int = int(main_group)
+    subgroup_str = subgroup if subgroup is not None else "00"
+    subgroup_int = int(subgroup_str)
+
     return {
-        "ipc_code": f"{section}{class2}{subclass} {main_group}/{subgroup}",
+        "ipc_code": f"{section}{class2}{subclass} {main_group_int}/{subgroup_str}",
         "section": section,
         "class2": class2,
         "subclass": subclass,
-        "main_group": int(main_group),
-        "subgroup": int(subgroup),
+        "main_group": main_group_int,
+        "subgroup": subgroup_int,
     }
 
 def parse_ai_ipc(ai_ipc: str) -> List[Dict[str, Any]]:
