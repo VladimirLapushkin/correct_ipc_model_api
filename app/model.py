@@ -17,7 +17,8 @@ FEATURE_COLS = ["ai_score", "rank", "main_group", "subgroup", "section", "class2
 NUMERIC_COLS = ["ai_score", "rank", "main_group", "subgroup"]
 CATEGORICAL_COLS = ["section", "class2", "subclass"]
 #IPC_RE = re.compile(r'^([A-H])(\\d{2})([A-Z])\\s*([0-9]{1,4})/([0-9]{2,6})$')
-IPC_RE = re.compile(r'^([A-H])(\d{2})([A-Z])\s*([0-9]{1,4})/([0-9]{2,6})$')
+#IPC_RE = re.compile(r'^([A-H])(\d{2})([A-Z])\s*([0-9]{1,4})/([0-9]{2,6})$')
+IPC_RE = re.compile(r'^([A-H])(\d{2})([A-Z])\s*([0-9]{1,4})(?:/([0-9]{2,6}))?$')
 CANDIDATE_RE = re.compile(r'([^;]+?)\\s*\\(([0-9]+(?:\\.[0-9]+)?)%\\)')
 
 
@@ -112,10 +113,15 @@ def parse_ai_ipc(ai_ipc: str) -> List[Dict[str, Any]]:
     for rank, part in enumerate(parts, start=1):
         m = item_re.match(part)
         if not m:
-            raise ValueError(f"Invalid candidate format: {part}")
+            continue
 
         ipc_raw, score_raw = m.groups()
-        parsed_ipc = parse_ipc_code(ipc_raw)
+
+        try:
+            parsed_ipc = parse_ipc_code(ipc_raw)
+        except ValueError:
+            continue
+
         rows.append({
             "ipc_code": parsed_ipc["ipc_code"],
             "ai_score": float(score_raw),
@@ -126,6 +132,9 @@ def parse_ai_ipc(ai_ipc: str) -> List[Dict[str, Any]]:
             "class2": parsed_ipc["class2"],
             "subclass": parsed_ipc["subclass"],
         })
+
+    if not rows:
+        raise ValueError("No valid IPC candidates found in ai_ipc")
 
     return rows
 
