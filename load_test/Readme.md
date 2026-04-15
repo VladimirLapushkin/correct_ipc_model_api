@@ -1,0 +1,1 @@
+python3 ipc_load_test.py   --host 127.0.0.1:8081   --path /predict   --dataset txt/ai-ipc.txt   --threads 20   --delay_ms 10   --total 100000   --responses_file responses.log
