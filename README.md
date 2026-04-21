@@ -21,9 +21,8 @@
 новые публикации, изменения в распределении тематик и постепенно улучшать
 качество автоматической классификации.
 
-\* МПК (IPC — International Patent Classification) — международная патентная
-классификация, иерархическая система кодов, используемая патентными ведомствами
-для отнесения изобретений к техническим областям.[web:2035][web:2038][web:2044]
+* МПК (IPC — International Patent Classification) — международная патентная классификация, иерархическая система кодов, используемая патентными ведомствами для отнесения изобретений к техническим областям. [Подробнее на Википедии]
+[mpk-wiki]: https://ru.wikipedia.org/wiki/%D0%9C%D0%B5%D0%B6%D0%B4%D1%83%D0%BD%D0%B0%D1%80%D0%BE%D0%B4%D0%BD%D0%B0%D1%8F_%D0%BF%D0%B0%D1%82%D0%B5%D0%BD%D1%82%D0%BD%D0%B0%D1%8F_%D0%BA%D0%BB%D0%B0%D1%81%D1%81%D0%B8%D1%84%D0%B8%D0%BA%D0%B0%D1%86%D0%B8%D1%8F
 
 ---
 
@@ -63,7 +62,7 @@
     и выбор champion-модели.
   - Dataproc запускает training jobs.
   - MLflow используется как tracking и registry-слой: параметры, метрики,
-    версии моделей, alias для production.[web:2036]
+    версии моделей, alias для production.
 
 - **Kubernetes + API модели**  
   - Kubernetes-кластер в Yandex Cloud.
@@ -72,7 +71,7 @@
   - Service типа LoadBalancer для внешнего доступа.
 
 - **Мониторинг и нагрузка**  
-  - Prometheus + Grafana для метрик и дашбордов.
+  - Prometheus + Grafana для метрик и дашбордов в YC.
   - Отдельный Python-скрипт для нагрузочного тестирования API.
 
 ---
@@ -104,7 +103,11 @@
 
 ### Формат данных в Object Storage
 
-- **Parquet-датасеты** в `ipc/data/pub`:
+- **Исходные-датасеты** в `ipc/data/`:
+  - pub - ежемесячные бюллетени публикаций в zip архивах;
+  - lst - рефераты заявок со списком ранее предсказанных IPC кодов базовой моделью.
+    
+- **Parquet-датасеты** в `ipc/dataprep`:
   - `patent_id` — идентификатор заявки;
   - дата / месяц публикации;
   - список экспертных IPC-кодов;
@@ -158,6 +161,7 @@
 - Установить Python 3.8.
 - Создать виртуальное окружение, которое будет упаковано и загружено в Airflow
   (делается через `make create-venv-archive`).
+- Установить s3cmd
 
 ### 4. Object Storage
 
@@ -172,7 +176,7 @@
 Создать registry для образов модели:
 
 ```bash
-yc container registry create --name fraud-registry
+yc container registry create --name ipc-registr
 ```
 
 ### 6. Доступ Airflow к DAG’ам
@@ -221,7 +225,6 @@ traininq_last_month     = "Крайняя точка обучения: 'last' и
 1. **Подготовка данных**
 
    - Исходный набор сохраняется в Parquet в S3.
-   - Строится long-format датафрейм: одна строка = «патент — кандидатный IPC».
    - Формируется target:
      - 1.0 — exact match с экспертным IPC;
      - 0.5 — совпадает только main group;
@@ -230,7 +233,7 @@ traininq_last_month     = "Крайняя точка обучения: 'last' и
 
 2. **Обучение кандидатов**
 
-   - Train-скрипт читает Parquet из S3 и преобразует его в long-format.
+   - Train-скрипт читает Parquet из S3 и преобразует его в long-format: одна строка = «патент — кандидатный IPC.
    - Деление на train/validation идёт по временной границе (месяцам публикации).
    - Используется CatBoostRegressor с признаками:
      - `ai_score`, `rank`;
@@ -282,7 +285,7 @@ Airflow DAG разбит на задачи:
   production-моделью.
 - Если champion существует — применяется champion–challenger схема:
   - новая модель продвигается только при улучшении на заданный `promote_margin`;
-  - это защищает production от случайных колебаний метрик.[web:2036][web:2039]
+  - это защищает production от случайных колебаний метрик.
 
 При успешном продвижении:
 
@@ -294,7 +297,7 @@ Airflow DAG разбит на задачи:
 Inference-сервис читает модель не по MLflow URI, а из стабильного S3-пути;
 ему не нужно знать внутреннюю структуру Registry.
 
-### Запуск кластера и обучения
+## Запуск кластера и обучения
 
 В корне **correct_ipc_airflow**:
 
@@ -307,13 +310,13 @@ make apply
 
 - разворачивается кластер Airflow + MLflow;
 - в S3-бакет Airflow копируются Python-скрипты, venv и `environment.json`;
-- DAG’и подтягиваются из `airflow_dags`.
+- DAG’и подтягиваются из github `airflow_dags`.
 
 После развёртывания:
 
 1. Перейти в Airflow UI, войти под `admin` / `admin_password`.
 2. Запустить DAG `init_variables` (инициализация переменных и подключений).
-3. Запустить DAG обучения/обновления модели, который:
+3. Запустить DAG обучения/обновления модели `training_pipeline`, который:
    - очищает и подготавливает данные;
    - обучает набор моделей-кандидатов;
    - выбирает лучшую;
@@ -322,6 +325,7 @@ make apply
 
 ### Удаление кластера Airflow
 
+После успешного выполнения DAG `training_pipeline` удалить кластер:
 ```bash
 make destroy
 ```
@@ -349,13 +353,13 @@ make destroy
 
 Для Kubernetes-объектов (Deployment, Service, HPA, ServiceMonitor, PrometheusRule)
 используются Terraform-ресурсы и/или YAML-манифесты, которые применяются через
-провайдер `kubernetes` и `kubectl` из CI.[web:2040][web:2043]
+провайдер `kubernetes` и `kubectl` из CI.
 
 Это даёт:
 
 - воспроизводимость окружений;
 - понятный `terraform plan` перед изменениями;
-- возможность отката и аудита инфраструктурных изменений.[web:2043]
+- возможность отката и аудита инфраструктурных изменений.
 
 ### CI/CD: GitHub Actions + шаблонные манифесты
 
@@ -379,8 +383,8 @@ make destroy
 - далее выполняются `kubectl apply` и `kubectl rollout status` для контроля
   обновления.
 
-Секреты доступа к S3 и контейнерному реестру создаются/обновляются в кластере
-также из GitHub Actions, что исключает ручные операции `kubectl create secret`.[web:2037][web:2043]
+Секреты доступа GitHub Actions к S3, YC и контейнерному реестру создаются при создании кластера,
+что исключает ручные операции `kubectl create secret`
 
 ### Автоматизация развёртывания: один `make apply`
 
@@ -394,9 +398,8 @@ make apply
 Этот шаг выполняет цепочку действий:
 
 1. Запускает `terraform apply`, который:
-   - создаёт или обновляет Kubernetes-кластер в Yandex Cloud;
-   - поднимает все необходимые облачные ресурсы (VPC, node groups,
-     Object Storage и т.п.).[web:2040][web:2043]
+   - создаёт  Kubernetes-кластер в Yandex Cloud;
+   - поднимает все необходимые облачные ресурсы (VPC, node groups и т.п.);
 
 2. После успешного применения Terraform:
    - настраивается `kubeconfig` для доступа к новому кластеру;
@@ -412,7 +415,7 @@ make apply
 4. Затем автоматически триггерится GitHub Actions workflow деплоя приложения:
    - сборка и публикация Docker-образа с моделью;
    - рендер манифеста Deployment с подстановкой текущего образа;
-   - `kubectl apply` и `kubectl rollout status` для API-сервиса.[web:2040]
+   - `kubectl apply`  для API-сервиса.
 
 В результате один вызов `make apply` поднимает «с нуля» полностью рабочий
 контур: кластер, мониторинг, секреты и актуальную версию API с моделью,
@@ -430,11 +433,6 @@ c_config = {
   zone      = "ru-central1-a"
 }
 
-yc_instance_user        = "ubuntu"
-yc_storage_endpoint_url = "https://storage.yandexcloud.net"
-
-admin_password          = "Пароль администратора (UI)"
-
 public_key_path         = "Путь к публичному SSH-ключу"
 private_key_path        = "Путь к приватному SSH-ключу"
 
@@ -442,8 +440,7 @@ c_ssh_public_key_path   = "~/.ssh/mlops_vlad.pub"
 ```
 
 В `/monitoring/terraform.tfvars` задать:
-
-- `grafana_admin_password` — пароль администратора Grafana.
+  - `grafana_admin_password` — пароль администратора Grafana.
 
 В `monitoring/config/alertmanager-config.yaml` настроить нотификации
 (в проекте реализована Telegram-нотификация).
@@ -539,22 +536,6 @@ python3 ipc_load_test.py \
 - суммарное время и фактический RPS;
 - тела ответов и ошибки логируются для последующего анализа поведения модели
   и API под нагрузкой.
-
----
-
-## Отладка и логи
-
-- **Airflow**
-  - Логи задач — через Airflow UI → Task Instance → Logs.
-  - Полезно проверять задачи подготовки данных и обучения кандидатов.
-
-- **API / Kubernetes**
-  - Логи подов: `kubectl logs -n <namespace> <pod-name>`.
-  - Состояние сервисов: `kubectl get svc -A` и `kubectl get pods -A`.
-
-- **Prometheus / Grafana**
-  - Для анализа latency и ошибок использовать готовые дашборды.
-  - Алерты из Alertmanager помогают реагировать на деградацию до инцидента.
 
 ---
 
