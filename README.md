@@ -474,6 +474,8 @@ API развёрнуто в Kubernetes как Deployment с:
   живучести и корректной инициализации модели.
 
 Пример вызова:
+получение IP balancer
+kubectl get svc correct-ipc -n default -o json | jq -r '.status.loadBalancer.ingress[0].ip'
 
 ```bash
 curl -s -X POST "http://81.26.188.138/predict" \
