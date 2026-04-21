@@ -475,7 +475,8 @@ API развёрнуто в Kubernetes как Deployment с:
 
 Пример вызова:
   
-  - получение IP balancer
+  - получение IP balancer:
+  
     make get_balancer_id 
 
 ```bash
