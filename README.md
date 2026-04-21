@@ -591,6 +591,12 @@ curl -s -X POST "http://81.26.188.138/predict" \
 PrometheusRule описывает алерты (например, рост доли 5xx или падение RPS),
 что позволяет оперативно реагировать на деградацию сервиса.
 
+доступ к prometheus и grafana можно получить через port forwarding kubectl:
+
+kubectl port-forward -n monitoring svc/prometheus-operated 9090:9090
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
+соответственно, используя http://localhost:9090 и http://localhost:3000
+
 ---
 
 ## Нагрузочное приложение
