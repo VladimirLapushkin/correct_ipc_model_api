@@ -476,15 +476,100 @@ API развёрнуто в Kubernetes как Deployment с:
 Пример вызова:
 
 ```bash
-curl -s -X POST "http://127.0.0.1:8081/predict" \
+curl -s -X POST "http://81.26.188.138/predict" \
   -H "Content-Type: application/json" \
   -d '{
     "patent_id": "RU-123",
-    "ai_ipc": "A61K31/00 (20.03%);A61K31/497 (5.22%);A61P35/00 (13.87%);C07D249/00 (8.4%);C17D249/08 (6.57%);"
+    "ai_ipc": "AI_IPC:A61K31/00 (20.03%);A61K31/497 (5.22%);A61P35/00 (13.87%);C07D249/00 (8.4%);C17D249/08 (6.57%);"
   }' | jq
 ```
 
+Пример ответа:
+
+```json
+{
+  "patent_id": "RU-123",
+  "model_meta": {
+    "model_name": "correct_ipc_v1_reg",
+    "model_version": "7",
+    "run_id": "5b3b306bb53e4d5d9bbb543923aacd1a",
+    "val_rmse": 0.2588601990865989,
+    "val_mae": 0.1657458509181336,
+    "input_key": "dataprep/ipc_with_ai_202603_last_12.parquet",
+    "source_model_key": "models/correct_ipc_v1_reg/candidates/v1_reg_base.cbm",
+    "promoted_at_utc": "2026-04-15T16:39:32.607345+00:00"
+  },
+  "parsed_candidates": [
+    {
+      "ipc_code": "A61K 31/00",
+      "ai_score": 20.03,
+      "rank": 1
+    },
+    {
+      "ipc_code": "A61K 31/497",
+      "ai_score": 5.22,
+      "rank": 2
+    },
+    {
+      "ipc_code": "A61P 35/00",
+      "ai_score": 13.87,
+      "rank": 3
+    },
+    {
+      "ipc_code": "C07D 249/00",
+      "ai_score": 8.4,
+      "rank": 4
+    },
+    {
+      "ipc_code": "C17D 249/08",
+      "ai_score": 6.57,
+      "rank": 5
+    }
+  ],
+  "predictions": [
+    {
+      "ipc_code": "A61P 35/00",
+      "ai_score": 13.87,
+      "rank": 3,
+      "score": 0.7760160649471507
+    },
+    {
+      "ipc_code": "A61K 31/497",
+      "ai_score": 5.22,
+      "rank": 2,
+      "score": 0.525706033458363
+    },
+    {
+      "ipc_code": "A61K 31/00",
+      "ai_score": 20.03,
+      "rank": 1,
+      "score": 0.39036078404340774
+    },
+    {
+      "ipc_code": "C17D 249/08",
+      "ai_score": 6.57,
+      "rank": 5,
+      "score": 0.19452647242992166
+    },
+    {
+      "ipc_code": "C07D 249/00",
+      "ai_score": 8.4,
+      "rank": 4,
+      "score": 0.10696233998843246
+    }
+  ],
+  "top_prediction": {
+    "ipc_code": "A61P 35/00",
+    "ai_score": 13.87,
+    "rank": 3,
+    "score": 0.7760160649471507
+  }
+}
+```
+
 ---
+
+
 
 ## Мониторинг и наблюдаемость
 
